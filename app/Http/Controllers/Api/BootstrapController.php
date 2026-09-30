@@ -8,6 +8,7 @@ use App\Models\Promo;
 use App\Models\User;
 use App\Services\PasswordHasher;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -81,12 +82,19 @@ class BootstrapController extends Controller
         ]);
     }
 
+    /**
+     * `password` & `saldo` hanya diisi saat akun pertama kali dibuat.
+     * Endpoint ini dipanggil setiap aplikasi dibuka, jadi menimpa keduanya
+     * akan membatalkan ganti password / reset password dan saldo pengguna.
+     */
+    private const CREATE_ONLY_FIELDS = ['password', 'saldo'];
+
     private function upsertUser(array $data): User
     {
         $existing = User::where('email', $data['email'])->first();
 
         if ($existing) {
-            $existing->fill($data)->save();
+            $existing->fill(Arr::except($data, self::CREATE_ONLY_FIELDS))->save();
 
             return $existing;
         }

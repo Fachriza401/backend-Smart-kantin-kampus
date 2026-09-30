@@ -64,7 +64,7 @@ class StatisticController extends Controller
         $tenantName = $request->query('tenant_name');
 
         $query = DB::table('orders')
-            ->selectRaw("DATE_FORMAT(createdAt, '%Y-%m-%d') AS day")
+            ->selectRaw("DATE_FORMAT({$this->localCreatedAt()}, '%Y-%m-%d') AS day", [$this->reportOffset()])
             ->selectRaw('COUNT(*) AS totalOrders')
             ->selectRaw('COALESCE(SUM(total), 0) AS revenue')
             ->where('status', '!=', 'Dibatalkan');
@@ -89,7 +89,7 @@ class StatisticController extends Controller
         $tenantName = $request->query('tenant_name');
 
         $query = DB::table('orders')
-            ->selectRaw("DATE_FORMAT(createdAt, '%Y-%m') AS month")
+            ->selectRaw("DATE_FORMAT({$this->localCreatedAt()}, '%Y-%m') AS month", [$this->reportOffset()])
             ->selectRaw('COUNT(*) AS totalOrders')
             ->selectRaw('COALESCE(SUM(total), 0) AS revenue')
             ->where('status', '!=', 'Dibatalkan');
@@ -105,6 +105,21 @@ class StatisticController extends Controller
             'totalOrders' => (int) $r->totalOrders,
             'revenue' => (float) $r->revenue,
         ])]);
+    }
+
+    /**
+     * `createdAt` disimpan dalam UTC; digeser ke jam lokal agar pesanan
+     * pukul 00.00–07.00 WIB tidak terhitung di tanggal sebelumnya.
+     * Pakai offset numerik supaya tidak butuh tabel zona waktu MySQL.
+     */
+    private function localCreatedAt(): string
+    {
+        return "CONVERT_TZ(createdAt, '+00:00', ?)";
+    }
+
+    private function reportOffset(): string
+    {
+        return (string) config('app.report_utc_offset', '+07:00');
     }
 
     /**

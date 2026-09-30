@@ -68,6 +68,14 @@ return [
     'timezone' => 'UTC',
 
     /*
+    | Offset jam lokal kantin terhadap UTC. Data tetap disimpan dalam UTC;
+    | offset ini hanya dipakai untuk mengelompokkan laporan penjualan per
+    | hari/bulan sesuai tanggal lokal (WIB = +07:00).
+    */
+
+    'report_utc_offset' => env('APP_REPORT_UTC_OFFSET', '+07:00'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
